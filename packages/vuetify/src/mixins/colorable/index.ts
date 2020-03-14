@@ -74,5 +74,36 @@ export default Vue.extend({
       }
       return data
     },
+
+    setBorderColor (color?: string | false, data: VNodeData = {}): VNodeData {
+      if (typeof data.style === 'string') {
+        // istanbul ignore next
+        consoleError('style must be an object', this)
+        // istanbul ignore next
+        return data
+      }
+      if (typeof data.class === 'string') {
+        // istanbul ignore next
+        consoleError('class must be an object', this)
+        // istanbul ignore next
+        return data
+      }
+      if (isCssColor(color)) {
+        data.style = {
+          ...data.style as object,
+          'border-color': `${color}`,
+        }
+      } else if (color) {
+        const [colorName, colorModifier] = color.toString().trim().split(' ', 2) as (string | undefined)[]
+        data.class = {
+          ...data.class,
+          [colorName + '--border']: true,
+        }
+        if (colorModifier) {
+          data.class['border--' + colorModifier] = true
+        }
+      }
+      return data
+    },
   },
 })

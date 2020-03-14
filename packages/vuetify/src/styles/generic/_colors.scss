@@ -6,6 +6,9 @@
   color: $color_value !important;
   caret-color: $color_value !important;
 }
+@mixin border-color($color_value) {
+  border-color: $color_value !important;
+}
 
 // Put the loop in a function so it can't leak
 @each $color_name, $color_value in $shades {
@@ -15,6 +18,10 @@
 
   .v-application .#{$color_name}--text {
     @include text-color($color_value);
+  }
+
+  .v-application .#{$color_name}--border {
+    @include border-color($color_value);
   }
 }
 
@@ -29,6 +36,10 @@
         .v-application .#{$color_name}--text {
           @include text-color($color_value);
         }
+
+        .v-application .#{$color_name}--border {
+          @include border-color($color_value);
+        }
       }
       @else if ($color_type != 'shades') {
         .v-application .#{$color_name}.#{$color_type} {
@@ -37,6 +48,10 @@
 
         .v-application .#{$color_name}--text.text--#{$color_type} {
           @include text-color($color_value);
+        }
+
+        .v-application .#{$color_name}--border.border--#{$color_type} {
+          @include border-color($color_value);
         }
       }
     }
