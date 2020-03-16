@@ -1,56 +1,81 @@
 import { VNode, VNodeDirective } from 'vue'
 import { consoleWarn } from '../../util/console'
+import colors from '../../util/colors'
+
+interface BorderModifiers {
+  top?: Boolean
+  right?: Boolean
+  bottom?: Boolean
+  left?: Boolean
+}
 
 function isCssColor (color?: string | false): boolean {
   return !!color && !!color.match(/^(#|var\(--|(rgb|hsl)a?\()/)
 }
 
-function setBackgroundColor (el: HTMLElement, color?: string | false): VNodeData {
-  if (isCssColor(color)) {
-    el.style.backgroundColor = `${color}`
-    el.style.borderColor = `${color}`
-  } else if (color) {
-    el.classList.add(color)
-  }
+function classToHex (color: string): string {
+  const [colorName, colorModifier] = color
+    .toString().trim().replace('-', '').split(' ', 2) as (string | undefined)[]
+  const hexColor = colorModifier
+    ? colors[colorName][colorModifier] : colors[colorName].base
+
+  return hexColor
 }
 
-function setTextColor (el: HTMLElement, color?: string | false): VNodeData {
-  if (isCssColor(color)) {
-    el.style.color = `${color}`
-    el.style.caretColor = `${color}`
-  } else if (color) {
-    const [colorName, colorModifier] = color.toString().trim().split(' ', 2) as (string | undefined)[]
-    el.classList.add(`${colorName}--text`)
-    if (colorModifier) {
-      el.classList.add(`text--${colorModifier}`)
-    }
+function setBackgroundColor (el: HTMLElement, color?: string | false) {
+  const setColor = (v: string) => {
+    el.style.backgroundColor = v
+    el.style.borderColor = v
   }
+
+  if (isCssColor(color)) setColor(color)
+  else if (color) setColor(classToHex(color))
 }
 
-function setBorderColor (el: HTMLElement, color?: string | false): VNodeData {
+function setTextColor (el: HTMLElement, color?: string | false) {
+  const setColor = (v: string) => {
+    el.style.color = v
+    el.style.caretColor = v
+  }
+
+  if (isCssColor(color)) setColor(color)
+  else if (color) setColor(classToHex(color))
+}
+
+function setBorderColor (
+  el: HTMLElement,
+  color?: string | false,
+  modifiers?: BorderModifiers
+) {
+  const hasModifiers = Object.keys(modifiers).length > 0
+
+  const setColor = (v: string) => el.style.borderColor = v
+  const setSidesColor = (v: string) => {
+    if (modifiers.top) el.style.borderTopColor = v
+    if (modifiers.right) el.style.borderRightColor = v
+    if (modifiers.bottom) el.style.borderBottomColor = v
+    if (modifiers.left) el.style.borderLeftColor = v
+  }
+
   if (isCssColor(color)) {
-    el.style.borderColor = `${color}`
+    if (hasModifiers) setSidesColor(color)
+    else setColor(color)
   } else if (color) {
-    const [colorName, colorModifier] = color.toString().trim().split(' ', 2) as (string | undefined)[]
-    el.classList.add(`${colorName}--border`)
-    if (colorModifier) {
-      el.classList.add(`border--${colorModifier}`)
-    }
+    const hexColor = classToHex(color)
+
+    if (hasModifiers) setSidesColor(hexColor)
+    else setColor(hexColor)
   }
 }
 
 function updateColor (el: HTMLElement, binding: VNodeDirective) {
-  if (binding.arg === 'background') setBackgroundColor(el, binding.value)
+  if (binding.arg === 'bg') setBackgroundColor(el, binding.value)
   else if (binding.arg === 'text') setTextColor(el, binding.value)
-  else if (binding.arg === 'border') setBorderColor(el, binding.value)
+  else if (binding.arg === 'border') setBorderColor(el, binding.value, binding.modifiers)
 }
 
 function directive (el: HTMLElement, binding: VNodeDirective, node: VNode) {
   updateColor(el, binding)
-}
-
-function unbind (el: HTMLElement) {
-
 }
 
 function update (el: HTMLElement, binding: VNodeDirective) {
@@ -63,7 +88,6 @@ function update (el: HTMLElement, binding: VNodeDirective) {
 
 export const Colorable = {
   bind: directive,
-  unbind,
   update,
 }
 
